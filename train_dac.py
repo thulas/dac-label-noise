@@ -495,7 +495,7 @@ def test(epoch):
 	    # Save checkpoint when best model
 
 		if acc > best_acc or epoch == args.save_epoch_model:# or (int(epoch/args.epdl) > 60 and int(epoch/args.epdl) <= 80):
-			best_acc = acc
+			
 			if args.save_best_model:
 				print('| Saving Best model...\t\t\tTop1 = %.2f%%' %(acc))
 				state = {
@@ -520,7 +520,8 @@ def test(epoch):
 					torch.save(state, save_point+file_name+'_expt_name_'+str(expt_name)+'_epoch_'+str(epoch)+'.t7')
 				else:
 					torch.save(state, save_point+file_name+'_expt_name_'+str(expt_name)+'.t7')
-
+		if acc > best_acc:
+			best_acc = acc
 
 
 
