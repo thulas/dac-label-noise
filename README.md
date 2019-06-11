@@ -1,8 +1,15 @@
 
-# Coming Soon
+# Deep Abstaining Classifier: Label denoising for  Deep Learning
 
-This repository is a placeholder for the implementation of the deep abstaining classifier described in 
+The Deep Abstaining Classifier uses an abstenttion loss function for identifying arbitrary and systematic label noise  while training deep neural networks. Details are in our ICML 2019 paper:
 
-**Combating Label Noise in Deep Learning Using Abstention**, Sunil Thulasidasan, Tanmoy Bhattacharya, Jeff Bilmes, Gopinath Chennupati, Jamaludin Mohd-Yusof. To appear in ICML 2019
+**Combating Label Noise in Deep Learning Using Abstention**, Sunil Thulasidasan, Tanmoy Bhattacharya, Jeff Bilmes, Gopinath Chennupati, Jamaludin Mohd-Yusof 
+
+### Tested with:
+
+PyTorch 1.0.1
+Python 2.7
+
+
 
 
