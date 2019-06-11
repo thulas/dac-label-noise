@@ -17,11 +17,15 @@ The DAC uses an abstention loss function for identifying arbitrary and systemati
   </div>
 
 
-To re-run the random monkeys experiment described in the paper, download the `STL-10 dataset <https://cs.stanford.edu/~acoates/stl10/>`
+To re-run the random monkeys experiment described in the paper, 
+
+- download the STL-10 dataset from https://cs.stanford.edu/~acoates/stl10/
+- copy `data/train_y_downshifted_random_monkeys.bin` to the STL-10 data directory
+
 and then run as follows:
 
 
-`python train_dac.py --datadir  <path-to-stl10-data> --dataset stl10-c --train_y data/train_y_downshifted_random_monkeys.bin --nesterov --net_type vggnet -use-gpu --epochs 75 --loss_fn dac_loss --learn_epochs 20 --seed 0`
+`python train_dac.py --datadir  <path-to-stl10-data> --dataset stl10-c --train_y train_y_downshifted_random_monkeys.bin --nesterov --net_type vggnet -use-gpu --epochs 75 --loss_fn dac_loss --learn_epochs 20 --seed 0`
 
 
 
@@ -31,6 +35,9 @@ and then run as follows:
 - PyTorch 1.0.1
 
 
+This is open source software available under the BSD Clear license;
 
-
+© (or copyright) 2019. Triad National Security, LLC. All rights reserved.
+ 
+This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S. Department of Energy/National Nuclear Security Administration. All rights in the program are reserved by Triad National Security, LLC, and the U.S. Department of Energy/National Nuclear Security Administration. The Government is granted for itself and others acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license in this material to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.
 
