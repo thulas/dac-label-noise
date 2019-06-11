@@ -31,18 +31,20 @@ class STL10_C(CIFAR10):
     base_folder = 'stl10_binary'
     class_names_file = 'class_names.txt'
     train_list = [
-        ['train_X_modified.bin', '918c2871b30a85fa023e0c44e0bee87f'],
+        #['train_X_modified.bin', '918c2871b30a85fa023e0c44e0bee87f'],
+        ['train_X.bin', '918c2871b30a85fa023e0c44e0bee87f'],
         #['train_X_smudged_all.bin', '918c2871b30a85fa023e0c44e0bee87f'],
-        ['train_y_modified.bin', '5a34089d4802c674881badbb80307741'],
-        #['train_y.bin', '5a34089d4802c674881badbb80307741']
+        #['train_y_modified.bin', '5a34089d4802c674881badbb80307741'],
+        ['train_y.bin', '5a34089d4802c674881badbb80307741']
         #['unlabeled_X.bin', '5242ba1fed5e4be9e1e742405eb56ca4']
         #['unlabeled_X_smudged_all.bin', '5242ba1fed5e4be9e1e742405eb56ca4']
         #['tiny-imagenet-5k-96x96x3-stl10-format-smudged-all.bin' ,'5242ba1fed5e4be9e1e742405eb56ca4']
-        ['tiny-imagenet-5k-96x96x3-stl10-format.bin' ,'5242ba1fed5e4be9e1e742405eb56ca4']
+        #['tiny-imagenet-5k-96x96x3-stl10-format.bin' ,'5242ba1fed5e4be9e1e742405eb56ca4']
     ]
 
     test_list = [
-        ['test_X_modified.bin', '7f263ba9f9e0b06b93213547f721ac82'],
+        #['test_X_modified.bin', '7f263ba9f9e0b06b93213547f721ac82'],
+        ['test_X.bin', '7f263ba9f9e0b06b93213547f721ac82'],
         #['test_X_smudged_all.bin', '7f263ba9f9e0b06b93213547f721ac82'],
         ['test_y.bin', '36f9794fa4beb8a2c72628de14fa638e']
     ]
