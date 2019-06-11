@@ -7,8 +7,9 @@ The Deep Abstaining Classifier uses an abstenttion loss function for identifying
 
 ### Tested with:
 
-PyTorch 1.0.1
-Python 2.7
+- Python 2.7
+- PyTorch 1.0.1
+
 
 
 
