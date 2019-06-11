@@ -31,6 +31,7 @@ and then run as follows:
 - PyTorch 1.0.1
 
 
+This is open source software available under the BSD Clear license;
 
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved.
  
