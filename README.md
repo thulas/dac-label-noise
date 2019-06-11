@@ -17,7 +17,7 @@ The DAC uses an abstention loss function for identifying arbitrary and systemati
   </div>
 
 
-To re-run the random monkeys experiment described in the paper, download the `STL-10 dataset <https://cs.stanford.edu/~acoates/stl10/>`
+To re-run the random monkeys experiment described in the paper, download the STL-10 dataset from https://cs.stanford.edu/~acoates/stl10/
 and then run as follows:
 
 
