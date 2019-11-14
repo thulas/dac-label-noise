@@ -1,19 +1,21 @@
 import numpy as np
+import pdb
+import cPickle as cp
 
-
-
-def label_noise(args, trainset):
+def label_noise(args, trainset, num_classes):
 
 	if args.rand_labels is not None:
-
+		#pdb.set_trace()
 		rf = args.rand_labels
 		if rf < 0. or rf > 1.:
 			print("rand_labels fraction should be between 0 and 1")
 			sys.exit(0)
+		#pdb.set_trace()
 		if args.dataset == 'stl10-labeled' or args.dataset=='tin200':
 			train_labels = np.asarray(trainset.labels)
 		else:
-			train_labels = np.asarray(trainset.train_labels)
+			#train_labels = np.asarray(trainset.train_labels)
+			train_labels = np.asarray(trainset.targets)
 
 		print("randomizing %f percent of labels " %(rf*100))
 		n_train = len(train_labels)
@@ -34,15 +36,20 @@ def label_noise(args, trainset):
 
 		if args.del_noisy_data:
 			print("deleting noisy data")
-			trainset.train_data = np.delete(trainset.train_data,wrong_indices,axis=0)
+			#trainset.train_data = np.delete(trainset.train_data,wrong_indices,axis=0)
+			trainset.data = np.delete(trainset.data,wrong_indices,axis=0)
 			train_labels = np.delete(train_labels,wrong_indices)
 
+		#pdb.set_trace()
 		if args.dataset == 'stl10-labeled' or args.dataset=='tin200':
 			trainset.labels = train_labels.tolist()
+		#elif args.dataset == 'mnist':
+		#	trainset.targets = train_labels.tolist()
 		else:
-			trainset.train_labels = train_labels.tolist()
+			#trainset.train_labels = train_labels.tolist()
+			trainset.targets = train_labels.tolist()
 
-		print("training on %d data samples" %(len(trainset.train_data)))
+		print("training on %d data samples" %(len(trainset.data)))
 
 		#save randomized indices if validation or train scores are also being saved
 		if args.save_val_scores or args.save_train_scores:
@@ -74,7 +81,8 @@ def label_noise(args, trainset):
 			train_labels = np.asarray(trainset.train_labels)
 			train_labels_good = np.copy(train_labels)
 			train_labels[noise_indices] = noise_labels
-			trainset.train_labels = train_labels.tolist()
+			#trainset.train_labels = train_labels.tolist()
+			trainset.targets = train_labels.tolist()
 
 	if args.exclude_train_indices is not None:
 		if args.rand_labels is not None:
@@ -94,7 +102,8 @@ def label_noise(args, trainset):
 		else: # cifar-10/100 and others
 			train_labels = np.asarray(trainset.train_labels)
 			train_labels = np.delete(train_labels,exclude_indices)
-			trainset.train_labels = train_labels.tolist()
+			#trainset.train_labels = train_labels.tolist()
+			trainset.targets = train_labels.tolist()
 
 		if args.label_noise_info is not None:
 			assert(train_labels_good is not None)

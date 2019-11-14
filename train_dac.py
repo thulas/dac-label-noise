@@ -83,6 +83,7 @@ parser.add_argument('--no_overwrite',action='store_true',default=False,help='wil
 
 parser.add_argument('--label_noise_info', default=None, type=str, help='pickle file  containing indices and labels to use for simulating label noise')
 
+parser.add_argument('--abst_rate', default=None, type=float, help='Pre-specified abstention rate; will attempt to dynamically tune abstention hyperparameter to stabilize abstention at this rate')
 
 #for wide residual networks
 parser.add_argument('--widen_factor', default=10, type=int, help='width of model')
@@ -117,9 +118,10 @@ if not args.save_epoch_model is None:
 	args.save_epoch_model = int(args.save_epoch_model*args.epdl)
 
 
-dac_loss.total_epochs = args.epochs
-dac_loss.alpha_final = args.alpha_final
-dac_loss.alpha_init_factor = args.alpha_init_factor
+#TODO: these have to be supplied to the dac_loss function; get rid of globals.
+# dac_loss.total_epochs = args.epochs
+# dac_loss.alpha_final = args.alpha_final
+# dac_loss.alpha_init_factor = args.alpha_init_factor
 
 if not args.log_file is None:
 	sys.stdout = open(args.log_file,'w')
@@ -138,7 +140,7 @@ sys.stdout.flush()
 #abstain class id is the last class
 abstain_class_id = num_classes
 #simulate label noise if needed
-trainset = label_noise.label_noise(args, trainset)
+trainset = label_noise.label_noise(args, trainset, num_classes)
 #set data loaders
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
 testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
@@ -335,7 +337,8 @@ if use_cuda:
 		print('Using regular  (non-abstaining) loss function during training')
 	else:
 		criterion = dac_loss.loss_fn_dict[args.loss_fn](model=net, learn_epochs=args.learn_epochs,
-			 use_cuda=True, cuda_device=cuda_device).cuda(cuda_device)
+			 total_epochs=args.epochs, use_cuda=True, cuda_device=cuda_device, abst_rate=args.abst_rate,
+			 alpha_final=args.alpha_final,alpha_init_factor=args.alpha_init_factor).cuda(cuda_device)
 
 else:
 	#criterion = nn.CrossEntropyLoss()
@@ -345,7 +348,9 @@ else:
 		print('Using regular  (non-abstaining) loss function during training')
 
 	else:
-		criterion = dac_loss.loss_fn_dict[args.loss_fn](model=net, learn_epochs=args.learn_epochs)
+		criterion = dac_loss.loss_fn_dict[args.loss_fn](model=net, 
+			learn_epochs=args.learn_epochs, total_epochs=args.epochs, abst_rate=abst_rate,
+			 alpha_final=args.alpha_final,alpha_init_factor=args.alpha_init_factor)
 
 
 def get_hms(seconds):
@@ -377,7 +382,7 @@ def train(epoch):
 		 momentum=0.9, weight_decay=5e-4,nesterov=args.nesterov)
 		print('\n=> Training Epoch #%d, LR=%.4f' %(epoch, cf.learning_rate(args.lr, int(epoch/args.epdl))))
 
-    #print('\n=> Training Epoch #%d, LR=%.4f' %(epoch, cf.learning_rate(args.lr, epoch)))
+	#print('\n=> Training Epoch #%d, LR=%.4f' %(epoch, cf.learning_rate(args.lr, epoch)))
 
 	for batch_idx, (inputs, targets) in enumerate(trainloader):
 	    #print(type(inputs))
@@ -421,7 +426,7 @@ def train(epoch):
 
 
 def save_train_scores(epoch):
-	net.eval()
+	#net.eval()
 
 	train_softmax_scores = []
 
@@ -435,7 +440,11 @@ def save_train_scores(epoch):
 
 	train_scores = torch.cat(train_softmax_scores).cpu().numpy()
 	print('Saving train softmax scores at  Epoch %d' %(epoch))
-	np.save(args.log_file+".train_scores.epoch_"+str(epoch), train_scores)
+	if args.log_file is None:
+		fn = 'test'
+	else:
+		fn = args.log_file
+	np.save(fn+".train_scores.epoch_"+str(epoch), train_scores)
 
 
 
