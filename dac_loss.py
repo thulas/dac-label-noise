@@ -15,11 +15,6 @@ from simple_pid import PID
 #for numerical stability
 epsilon = 1e-7
 
-#TODO: remove below this might be changed from inside the main script
-# total_epochs = 200
-# alpha_final = 1.0
-# alpha_init_factor = 64.
-
 
 
 
@@ -104,9 +99,7 @@ class dac_loss(_Loss):
 
 	def __call__(self, input_batch, target_batch, epoch):
 		#pdb.set_trace()
-		#TODO: remove global
-		#global total_epochs, alpha_final 
-		#pdb.set_trace()
+		
 		if epoch < self.learn_epochs or not self.model.training:
 			loss =  F.cross_entropy(input_batch, target_batch, reduce=False)
 			#return loss.mean()

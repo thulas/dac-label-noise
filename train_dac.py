@@ -118,11 +118,6 @@ if not args.save_epoch_model is None:
 	args.save_epoch_model = int(args.save_epoch_model*args.epdl)
 
 
-#TODO: these have to be supplied to the dac_loss function; get rid of globals.
-# dac_loss.total_epochs = args.epochs
-# dac_loss.alpha_final = args.alpha_final
-# dac_loss.alpha_init_factor = args.alpha_init_factor
-
 if not args.log_file is None:
 	sys.stdout = open(args.log_file,'w')
 	sys.stderr = sys.stdout
