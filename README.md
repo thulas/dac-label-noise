@@ -21,11 +21,12 @@ To re-run the random monkeys experiment described in the paper,
 
 - download the STL-10 dataset from https://cs.stanford.edu/~acoates/stl10/
 - copy `data/train_y_downshifted_random_monkeys.bin` to the STL-10 data directory
+- copy `data/test_y_downshifted_random_monkeys.bin` to the STL-10 data directory
 
 and then run as follows:
 
 
-`python train_dac.py --datadir  <path-to-stl10-data> --dataset stl10-c --train_y train_y_downshifted_random_monkeys.bin --nesterov --net_type vggnet -use-gpu --epochs 75 --loss_fn dac_loss --learn_epochs 20 --seed 0`
+`python train_dac.py --datadir  <path-to-stl10-data> --dataset stl10-c --train_y train_y_downshifted_random_monkeys.bin --test_y test_y_downshifted_random_monkeys.bin --nesterov --net_type vggnet -use-gpu --epochs 75 --loss_fn dac_loss --learn_epochs 20 --seed 0`
 
 
 
