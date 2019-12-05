@@ -65,7 +65,7 @@ More results are in our ICML 2019 paper.
 
 ### Tested with:
 
-- Python 2.7
+- Python 2.7 and 3.6
 - PyTorch 1.0.1
 
 ### Citation
