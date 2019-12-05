@@ -4,7 +4,10 @@ load and prepare various datasets
 
 import torchvision
 import torchvision.transforms as transforms
-import stl10_c
+try:
+	import stl10_c
+except ModuleNotFoundError:
+	from . import stl10_c
 import sys
 
 def get_data(args):

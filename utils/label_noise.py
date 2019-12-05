@@ -1,6 +1,9 @@
 import numpy as np
 import pdb
-import cPickle as cp
+try:
+	import cPickle as cp
+except ModuleNotFoundError: #no cPickle in python 3
+	import pickle as cp
 
 def label_noise(args, trainset, num_classes):
 
@@ -71,14 +74,18 @@ def label_noise(args, trainset, num_classes):
 			print("rand_labels option cannot be chosen when --label_noise_info is active")
 			quit()
 		print("using label noise info specified in ", args.label_noise_info)
-		(noise_indices, noise_labels) = cp.load(open(args.label_noise_info,'rb'))
+		try:
+			(noise_indices, noise_labels) = cp.load(open(args.label_noise_info,'rb'))
+		except UnicodeDecodeError: #reading python 2 pickles in python 3 can throw this error. 
+			(noise_indices, noise_labels) = cp.load(open(args.label_noise_info,'rb'),encoding='bytes')
+
 		if args.dataset == 'stl10-labeled' or args.dataset == 'stl10-c' or args.dataset=='tin200':
 			train_labels = np.asarray(trainset.labels)
 			train_labels_good = np.copy(train_labels)
 			train_labels[noise_indices] = noise_labels
 			trainset.labels = train_labels.tolist()
 		else: # cifar-10/100 and others
-			train_labels = np.asarray(trainset.train_labels)
+			train_labels = np.asarray(trainset.targets)
 			train_labels_good = np.copy(train_labels)
 			train_labels[noise_indices] = noise_labels
 			#trainset.train_labels = train_labels.tolist()
@@ -94,13 +101,13 @@ def label_noise(args, trainset, num_classes):
 		if args.dataset == 'stl10-c':
 			trainset.data = np.delete(trainset.data, exclude_indices,axis=0)
 		else:
-			trainset.train_data = np.delete(trainset.train_data, exclude_indices,axis=0)
+			trainset.data = np.delete(trainset.data, exclude_indices,axis=0)
 		if args.dataset == 'stl10-labeled' or args.dataset == 'stl10-c' or args.dataset=='tin200':
 			train_labels = np.asarray(trainset.labels)
 			train_labels = np.delete(train_labels,exclude_indices)
 			trainset.labels = train_labels.tolist()
 		else: # cifar-10/100 and others
-			train_labels = np.asarray(trainset.train_labels)
+			train_labels = np.asarray(trainset.targets)
 			train_labels = np.delete(train_labels,exclude_indices)
 			#trainset.train_labels = train_labels.tolist()
 			trainset.targets = train_labels.tolist()

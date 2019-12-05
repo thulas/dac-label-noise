@@ -1,6 +1,7 @@
 import subprocess
 import numpy as np
 import socket
+#import pdb
 
 def get_num_gpus():
 	nvo = subprocess.Popen(['nvidia-smi','-L'],stdout=subprocess.PIPE)
@@ -66,7 +67,7 @@ def get_free_gpu_list(gpu_range):
 	#sleep_time = np.random.uniform(0,num_gpus)
 	sleep_time = np.random.uniform(0,4)
 	wid = socket.gethostname()
-	print "sleeping for time %f on %s" %(sleep_time,wid)
+	print("sleeping for time %f on %s" %(sleep_time,wid))
 	time.sleep(sleep_time)
 
 	#pdb.set_trace()
@@ -111,6 +112,7 @@ def get_free_gpu(gpu_range):
 	"""                                                                                                                                                                                                
 	returns first non-busy GPU in range(gpu_range)                                                                                                                                                     
 	"""
+	#pdb.set_trace()
 	for gpu_id in range(gpu_range):
 	    #nvo = subprocess.Popen(['nvidia-smi','-q','-i',str(gpu_id),],stdout=subprocess.PIPE)
 	    gpu_str_id = '--id='+str(gpu_id)
@@ -127,6 +129,8 @@ def get_free_gpu(gpu_range):
 	    #nvo_process = subprocess.Popen(['grep', '"Process ID"'],
 	    #                                stdin=nvo.stdout,stdout=subprocess.PIPE)
 	    #nvo.stdout.close()
+	    if type(busy)==bytes:
+	    	busy = busy.decode("utf-8")
 	    if busy == '0':
 	        return gpu_id
 	return None
@@ -140,8 +144,8 @@ def get_cuda_device(args):
 
 	if args.use_gpu:
 		if args.cuda_device == 'auto':
-			print "trying to auto-detect free GPU"
-			#To do: move the function to another module, since this
+			print("trying to auto-detect free GPU")
+			#to do: move the function to another module, since this
 			#does not have anything to do with theano
 			import random, time
 			#if True:
@@ -151,7 +155,7 @@ def get_cuda_device(args):
 			#sleep_time = np.random.uniform(0,num_gpus)
 			sleep_time = np.random.uniform(0,4)
 			wid = socket.gethostname()
-			print "sleeping for time %f on %s" %(sleep_time,wid)
+			print("sleeping for time %f on %s" %(sleep_time,wid))
 			time.sleep(sleep_time)
 			gpu = get_free_gpu(num_gpus)
 			if not (gpu is None):
@@ -161,7 +165,7 @@ def get_cuda_device(args):
 
 		else: # use user specified cuda device
 			cuda_device_id = int(args.cuda_device)
-		print "using GPU ", cuda_device_id
+		print("using GPU ", cuda_device_id)
 
 	else:
 		cuda_device_id = None

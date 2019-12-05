@@ -54,6 +54,8 @@ parser.add_argument('--net_type', default=None, type=str, help='model')
 parser.add_argument('--depth', default=16, type=int, help='depth of model')
 parser.add_argument('--loss_fn',dest='loss_fn',type=str,default=None,
                         help="abstaining loss function.  If this switch isn't used, defaults to regular cross-entropy (non-abstaining) loss")
+parser.add_argument('--output_path', default="./", type=str, help='output path')
+
 parser.add_argument('--log_file', default=None, type=str, help='logfile name')
 
 parser.add_argument('--save_val_scores',action='store_true',default=False,help='writes validation set softmax scores to file after each epoch')
@@ -88,6 +90,12 @@ parser.add_argument('--abst_rate', default=None, type=float, help='Pre-specified
 #for wide residual networks
 parser.add_argument('--widen_factor', default=10, type=int, help='width of model')
 
+
+parser.add_argument('--k_p', default=0.1, type=float, help='PID proportional gain')
+parser.add_argument('--k_i', default=0.1, type=float, help='PID integral gain')
+parser.add_argument('--k_d', default=0.05, type=float, help='PID derivative gain')
+
+
 args = parser.parse_args()
 
 
@@ -107,8 +115,16 @@ import pdb
 import numpy as np
 from networks import wide_resnet,lenet,vggnet, resnet, resnet2, cnn
 from networks import config as cf
-import dac_loss
-import cPickle as cp
+
+#import dac_loss_pid
+#import dac_loss
+
+from loss_functions import loss_fn_dict
+
+try:
+	import cPickle as cp
+except ModuleNotFoundError: #no cPickle in python 3
+	import pickle as cp
 
 #do time compression or dilation
 args.epochs = int(args.epochs*args.epdl)
@@ -125,7 +141,7 @@ if not args.log_file is None:
 torch.manual_seed(args.seed)
 
 
-start_epoch, num_epochs = 0, args.epochs
+start_epoch, num_epochs = 1, args.epochs
 batch_size = args.batch_size
 best_acc = 0.
 
@@ -145,10 +161,10 @@ if args.save_train_scores:
 
 
 # GPU specific stuff. 
-# To do: clean up.
+# TODO: move to gpu_utils
 use_cuda=False
+cuda_device=None
 if args.use_gpu:
-	cuda_device = None
 	if not args.data_parallel:
 		#keep trying to get a GPU if use GPU is specified
 		while(cuda_device is None):
@@ -311,41 +327,39 @@ else:
 sys.stdout.flush()
 
 
+#set up loss function and CUDA-fy if needed
+if args.loss_fn is None:
+	criterion = nn.CrossEntropyLoss()
+	print('Using regular  (non-abstaining) loss function during training')
+	if use_cuda:
+		criterion = nn.CrossEntropyLoss().cuda(cuda_device)
+else:
+	if args.loss_fn == 'dac_loss':
+		if args.abst_rate is None:
+			criterion = loss_fn_dict['dac_loss'](model=net, learn_epochs=args.learn_epochs, 
+				total_epochs=args.epochs,  use_cuda=use_cuda, alpha_final=args.alpha_final, 
+				alpha_init_factor=args.alpha_init_factor)
+		else:
+			pid_tunings = (args.k_p, args.k_i, args.k_d)
+			criterion = loss_fn_dict['dac_loss_pid'](model=net, learn_epochs=args.learn_epochs,
+				 total_epochs=args.epochs, use_cuda=use_cuda, cuda_device=cuda_device, abst_rate=args.abst_rate,
+				 alpha_final=args.alpha_final,alpha_init_factor=args.alpha_init_factor, pid_tunings=pid_tunings)
+	else:
+		print("Unknown loss function")
+		sys.exit(0)
 
+	if use_cuda:
+		criterion = criterion.cuda(cuda_device)
+
+
+#CUDA-fy network
+#pdb.set_trace()
 if use_cuda:
 	if args.data_parallel:
-		net = torch.nn.DataParallel(net, device_ids=cuda_devices).cuda()
+		net = torch.nn.DataParallel(net, device_ids=cuda_devices).cuda(cuda_device)
 	else:
 		net = net.cuda(cuda_device)
-	
 	cudnn.benchmark = True
-
-
-
-#CUDA-fy loss function
-#TODO: get rid of cuda and cuda_device redundancies
-if use_cuda:
-	#criterion = nn.CrossEntropyLoss().cuda()
-	#criterion = nn.NLLLoss().cuda()
-	if args.loss_fn is None:
-		criterion = nn.CrossEntropyLoss().cuda(cuda_device)
-		print('Using regular  (non-abstaining) loss function during training')
-	else:
-		criterion = dac_loss.loss_fn_dict[args.loss_fn](model=net, learn_epochs=args.learn_epochs,
-			 total_epochs=args.epochs, use_cuda=True, cuda_device=cuda_device, abst_rate=args.abst_rate,
-			 alpha_final=args.alpha_final,alpha_init_factor=args.alpha_init_factor).cuda(cuda_device)
-
-else:
-	#criterion = nn.CrossEntropyLoss()
-	#criterion = nn.NLLLoss()
-	if args.loss_fn is None:
-		criterion = nn.CrossEntropyLoss()
-		print('Using regular  (non-abstaining) loss function during training')
-
-	else:
-		criterion = dac_loss.loss_fn_dict[args.loss_fn](model=net, 
-			learn_epochs=args.learn_epochs, total_epochs=args.epochs, abst_rate=abst_rate,
-			 alpha_final=args.alpha_final,alpha_init_factor=args.alpha_init_factor)
 
 
 def get_hms(seconds):
@@ -354,6 +368,7 @@ def get_hms(seconds):
 
     return h, m, s
 
+#pdb.set_trace()
 def train(epoch):
 	net.train()
 	train_loss = 0
@@ -362,10 +377,11 @@ def train(epoch):
 	abstain = 0
 
 	if args.dataset == 'mnist':
-	    if int(epoch/args.epdl) > 5 and  int(epoch/args.epdl) < 20:
+	    if int(epoch/args.epdl) > 5 and  int(epoch/args.epdl) <= 20:
 	    	args.lr = 0.01
-	    if int(epoch/args.epdl) >= 20:
+	    if int(epoch/args.epdl) > 20 and int(epoch/args.epdl) <=50:
 	    	args.lr = 0.001
+
     #optimizer = optim.SGD(net.parameters(), lr=cf.learning_rate(args.lr, epoch), momentum=0.9, 
 	    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, 
 	    	nesterov=args.nesterov, weight_decay=5e-4)
@@ -378,7 +394,7 @@ def train(epoch):
 		print('\n=> Training Epoch #%d, LR=%.4f' %(epoch, cf.learning_rate(args.lr, int(epoch/args.epdl))))
 
 	#print('\n=> Training Epoch #%d, LR=%.4f' %(epoch, cf.learning_rate(args.lr, epoch)))
-
+	#pdb.set_trace()	
 	for batch_idx, (inputs, targets) in enumerate(trainloader):
 	    #print(type(inputs))
         #print(dir(inputs.cuda))
@@ -390,6 +406,7 @@ def train(epoch):
 		optimizer.zero_grad()
 		inputs, targets = Variable(inputs), Variable(targets)
 		outputs = net(inputs)               # Forward Propagation
+		#pdb.set_trace()
 		if args.loss_fn is None:
 			loss = criterion(outputs, targets)
 		else:
@@ -400,10 +417,13 @@ def train(epoch):
 
 		train_loss += loss.data.item()
 		_, predicted = torch.max(outputs.data, 1)
-		total += targets.size(0)
+		this_batch_size =targets.size(0) 
+		total += this_batch_size
 		correct += predicted.eq(targets.data).cpu().sum().data.item()
 
-		abstain += predicted.eq(abstain_class_id).sum().data.item()
+		abstained_now = predicted.eq(abstain_class_id).sum().data.item()
+		abstain += abstained_now
+
 		if total-abstain != 0:
 			#pdb.set_trace()
 			abst_acc = 100.*correct/(float(total-abstain))
@@ -411,12 +431,15 @@ def train(epoch):
 			abst_acc = 1.
 
 		sys.stdout.write('\r')
-		sys.stdout.write('| Epoch [%3d/%3d] Iter[%3d/%3d]\t\tAbstained %d Loss: %.4f Acc@1: %.3f%% Acc@2: %.3f%%'
+		sys.stdout.write('| Epoch [%3d/%3d] Iter[%3d/%3d]\t\tAbstained %d Abstention rate %.4f Cumulative Abstention Rate: %.4f Loss: %.4f Acc@1: %.3f%% Acc@2: %.3f%%'
 		        %(epoch, num_epochs, batch_idx+1,
-		            (len(trainset)//batch_size)+1, abstain, loss.data.item(), 100.*correct/float(total), abst_acc))
+		            (len(trainset)//batch_size)+1, abstain, float(abstained_now)/this_batch_size, float(abstain)/total, loss.data.item(), 100.*correct/float(total), abst_acc))
 
+		
 		sys.stdout.flush()
 
+	#if args.loss_fn == 'dac_loss_pid':
+	#	criterion.print_abst_stats(epoch)
 
 
 
@@ -424,6 +447,8 @@ def save_train_scores(epoch):
 	#net.eval()
 
 	train_softmax_scores = []
+	total = 0
+	abstained = 0
 
 	for batch_idx, (inputs, targets) in enumerate(train_perf_loader):
 		if use_cuda:
@@ -431,16 +456,23 @@ def save_train_scores(epoch):
 		inputs, targets = Variable(inputs), Variable(targets)
 		outputs = net(inputs)               # Forward Propagation
 		p_out = F.softmax(outputs,dim=1)
+		#pdb.set_trace()
+		total += p_out.size(0)
+		_,predicted = torch.max(p_out.data,1)
+		abstained += predicted.eq(abstain_class_id).sum().data.item()
 		train_softmax_scores.append(p_out.data)
 
 	train_scores = torch.cat(train_softmax_scores).cpu().numpy()
 	print('Saving train softmax scores at  Epoch %d' %(epoch))
-	if args.log_file is None:
-		fn = 'test'
-	else:
-		fn = args.log_file
-	np.save(fn+".train_scores.epoch_"+str(epoch), train_scores)
-
+	#if args.log_file is None:
+	# if args.expt_name is None:
+	# 	fn = 'test'
+	# else:
+	# 	fn = args.expt_name 
+	fn = args.expt_name if args.expt_name else 'test'
+	np.save(args.output_path+fn+".train_scores.epoch_"+str(epoch), train_scores)
+	print("\n##### Epoch %d Train Abstention Rate at end of epoch %.4f" 
+			%(epoch, float(abstained)/total))
 
 
 def test(epoch):
@@ -482,7 +514,10 @@ def test(epoch):
 			val_scores = torch.cat(val_softmax_scores).cpu().numpy()
 
 			print('Saving softmax scores at Validation Epoch %d' %(epoch))
-			np.save(args.log_file+".val_scores.epoch_"+str(epoch), val_scores)
+			fn = args.expt_name if args.expt_name else 'test'
+			#np.save(fn+".train_scores.epoch_"+str(epoch), train_scores)
+
+			np.save(args.output_path+fn+".val_scores.epoch_"+str(epoch), val_scores)
 
 		#pdb.set_trace()
 		acc = 100.*correct/float(total)
@@ -495,7 +530,6 @@ def test(epoch):
 
 	    #return
 
-	    #TODO: uncomment if models need to be saved.
 	    # Save checkpoint when best model
 
 		if acc > best_acc or epoch == args.save_epoch_model:# or (int(epoch/args.epdl) > 60 and int(epoch/args.epdl) <= 80):
