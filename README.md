@@ -1,5 +1,5 @@
 
-# Deep Abstaining Classifier: Label denoising for  Deep Learning
+# Deep Abstaining Classifier: Label Denoising for  Deep Learning
 
 PyTorch implementation of the deep abstaining classifier (DAC) from the  ICML 2019 paper:
 
