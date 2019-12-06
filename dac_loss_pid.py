@@ -9,9 +9,6 @@ from torch.nn.modules.loss import _Loss
 import pdb
 import math
 
-#from simple_pid import PID
-#from PID import PID
-
 from pid import pid_controller as PID
 
 #for numerical stability
