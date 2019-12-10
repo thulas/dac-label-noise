@@ -5,9 +5,9 @@ PyTorch implementation of the deep abstaining classifier (DAC) from the  ICML 20
 
 **Combating Label Noise in Deep Learning Using Abstention**, Sunil Thulasidasan, Tanmoy Bhattacharya, Jeff Bilmes, Gopinath Chennupati, Jamaludin Mohd-Yusof 
 
-The DAC uses an abstention loss function for identifying both arbitrary and systematic label noise  while training deep neural networks. 
+The DAC uses an abstention loss function for identifying both [systematic](#identifying-systematic-label-noise) and [arbitrary](#identifying-arbitrary-label-noise) label noise  while training deep neural networks. 
 
-**_New_: Abstention can now be stabilized at a desired setpoint**. See section on [stabilizing abstention at a pre-determined setpoint](#stabilizing-abstention-at-a-pre-determined-setpoint)
+**_New_: Abstention can now be stabilized at a desired setpoint**. This is useful if you have an estimate of the amount of label noise in your training data. See section on [stabilizing abstention at a pre-determined setpoint](#stabilizing-abstention-at-a-pre-determined-setpoint)
 
 ## Identifying Systematic Label Noise
 
